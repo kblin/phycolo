@@ -2,10 +2,12 @@ from unittest import TestCase
 
 from os import path
 from collections import defaultdict
+from sqlalchemy import create_engine
 from helperlibs.bio import seqio
 
 from phycolo.utils import count_codons
-from phycolo.actions import codon_table
+from phycolo.models import Fingerprint, Base, Session
+from phycolo.actions import codon_table, store
 
 _codon_table_template = '''Codon usage %(name)s:
 TTT:\t%(TTT_count)s\t%(TTT)0.2f\t\tTCT:\t%(TCT_count)s\t%(TCT)0.2f\t\tTAT:\t%(TAT_count)s\t%(TAT)0.2f\t\tTGT:\t%(TGT_count)s\t%(TGT)0.2f
@@ -40,6 +42,11 @@ class TestPhycoloActions(TestCase):
     def setUp(self):
         self.record = seqio.read(get_file_path('melanin.gbk'))
         self.maxDiff = None
+        engine = create_engine('sqlite://')
+        Base.metadata.create_all(engine)
+        Session.configure(bind=engine)
+        self.session = Session()
+
 
     def test_codon_table(self):
         '''Test actions.codon_table()'''
@@ -58,3 +65,13 @@ class TestPhycoloActions(TestCase):
 
         generated = codon_table(self.record)
         self.assertMultiLineEqual(expected, generated)
+
+
+    def test_store(self):
+        '''Test actions.store()'''
+        self.assertIsNone(self.session.query(Fingerprint).get('AB070938.1'))
+        store(self.session, self.record)
+        melanin = self.session.query(Fingerprint).get('AB070938.1')
+        self.assertIsNotNone(melanin)
+        self.assertEqual(144, melanin.GCC_count)
+        self.assertEqual(0, melanin.TAA_count)

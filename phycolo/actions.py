@@ -38,7 +38,9 @@ def codon_table(record):
 
 
 def store(session, record):
-    raise NotImplementedError("Implement store")
+    fingerprint = _create_fingerprint(record)
+    session.add(fingerprint)
+    session.commit()
 
 
 def search(session, record):
