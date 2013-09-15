@@ -49,7 +49,7 @@ def main():
     if options.mode == 'store':
         actions.store(session, record)
     else:
-        actions.search(session, record)
+        print actions.search(session, record)
 
 if __name__ == "__main__":
     main()

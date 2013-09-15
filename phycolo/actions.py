@@ -2,6 +2,8 @@
 # Part of phycolo, see LICENSE for details
 # Copyright (C) 2013  Kai Blin <kai.blin@biotech.uni-tuebingen.de>
 
+import phycolo
+from phycolo.data import all_codons
 from phycolo.utils import count_codons
 from phycolo.models import Fingerprint
 
@@ -43,5 +45,40 @@ def store(session, record):
     session.commit()
 
 
-def search(session, record):
-    raise NotImplementedError("Implement search")
+def _get_quadratic_errors(session, fingerprint):
+    errors = []
+    for fp in session.query(Fingerprint).all():
+        error = 0.0
+        for codon in all_codons:
+            codon_error = getattr(fingerprint, codon) - getattr(fp, codon)
+            error += codon_error * codon_error
+        errors.append((error, fp))
+    errors.sort()
+    return zip(*errors)
+
+
+def search(session, record, numhits=5):
+    fingerprint = _create_fingerprint(record)
+    errors, fingerprints = _get_quadratic_errors(session, fingerprint)
+    partial = fingerprints[:numhits]
+    partial_errors = errors[:numhits]
+    output = '''# phycolo {}
+# Query: {}
+# Database size: {}
+# Showing {} hits
+'''.format(phycolo.__version__, fingerprint.name, len(errors), numhits)
+
+    # we can't show more than short_errors hits
+    items = min(numhits, len(partial)) + 1
+    header = "{:<24}" + "  {:18.4f}" * len(partial_errors) + "\n"
+    output += header.format("Quadratic error:", *partial_errors)
+    header = "    " + "{:>20}" * items + "\n"
+    output += header.format(fingerprint.name, *partial)
+
+    template = "{} " + "{:20.2f}" * items + "\n"
+    for codon in all_codons:
+        codon_percentages = map(lambda x: getattr(x, codon), partial)
+        output += template.format(codon, getattr(fingerprint, codon), \
+                                  *codon_percentages)
+
+    return output

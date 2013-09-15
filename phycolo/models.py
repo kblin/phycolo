@@ -164,3 +164,7 @@ class Fingerprint(Base):
             codon_count = self.__getattribute__("{0}_count".format(codon))
             percentage = float(codon_count) / total_count * 100
             self.__setattr__(codon, percentage)
+
+
+    def __str__(self):
+        return self.name

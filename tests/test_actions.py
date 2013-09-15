@@ -7,7 +7,7 @@ from helperlibs.bio import seqio
 
 from phycolo.utils import count_codons
 from phycolo.models import Fingerprint, Base, Session
-from phycolo.actions import codon_table, store
+from phycolo.actions import codon_table, store, _get_quadratic_errors
 
 _codon_table_template = '''Codon usage %(name)s:
 TTT:\t%(TTT_count)s\t%(TTT)0.2f\t\tTCT:\t%(TCT_count)s\t%(TCT)0.2f\t\tTAT:\t%(TAT_count)s\t%(TAT)0.2f\t\tTGT:\t%(TGT_count)s\t%(TGT)0.2f
@@ -75,3 +75,20 @@ class TestPhycoloActions(TestCase):
         self.assertIsNotNone(melanin)
         self.assertEqual(144, melanin.GCC_count)
         self.assertEqual(0, melanin.TAA_count)
+
+
+    def test_get_quadratic_errors(self):
+        '''Test actions._get_quadratic_errors()'''
+        expected_fingerprints = (
+            Fingerprint('foo', ATG=8, GTG=2, TGA=7, TAG=2, TAA=1),
+            Fingerprint('baz', ATG=10, TGA=10),
+            Fingerprint('bar', ATG=3, GTG=6, TTG=1, TAG=4, TAA=6),
+        )
+        self.session.add_all(expected_fingerprints)
+        self.session.commit()
+        expected_errors = (300.0, 1000.0, 2400.0)
+
+        needle = Fingerprint('needle', ATG=7, GTG=1, TTG=2, TGA=6, TAG=1, TAA=3)
+        errors, fingerprints = _get_quadratic_errors(self.session, needle)
+        self.assertEqual(expected_errors, errors)
+        self.assertEqual(expected_fingerprints, fingerprints)
