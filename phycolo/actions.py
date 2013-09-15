@@ -27,9 +27,13 @@ GTA:\t%(GTA_count)s\t%(GTA)0.2f\t\tGCA:\t%(GCA_count)s\t%(GCA)0.2f\t\tGAA:\t%(GA
 GTG:\t%(GTG_count)s\t%(GTG)0.2f\t\tGCG:\t%(GCG_count)s\t%(GCG)0.2f\t\tGAG:\t%(GAG_count)s\t%(GAG)0.2f\t\tGGG:\t%(GGG_count)s\t%(GGG)0.2f
 '''
 
-def codon_table(record):
+def _create_fingerprint(record):
     counts = count_codons(record)
-    fingerprint = Fingerprint(record.id, **counts)
+    return Fingerprint(record.id, **counts)
+
+
+def codon_table(record):
+    fingerprint = _create_fingerprint(record)
     return _codon_table_template % fingerprint.__dict__
 
 
