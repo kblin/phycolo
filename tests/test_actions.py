@@ -4,7 +4,7 @@ from os import path
 from collections import defaultdict
 from helperlibs.bio import seqio
 
-from phycolo.actions import count_codons
+from phycolo.utils import count_codons
 from phycolo.actions import codon_table
 
 _codon_table_template = '''Codon usage %(name)s:
