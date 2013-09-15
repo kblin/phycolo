@@ -8,7 +8,7 @@ class TestFingerprint(TestCase):
     def test_init(self):
         '''Test Fingerprint initialization'''
         fingerprint = Fingerprint('foo', ATG=5)
-        self.assertTrue(isinstance(fingerprint, Fingerprint))
+        self.assertIsInstance(fingerprint, Fingerprint)
 
 
     def test_init_no_valid_codons(self):
