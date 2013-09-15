@@ -23,3 +23,8 @@ class TestPhycoloUtils(TestCase):
         codons = count_codons(self.record)
         self.assertEqual(144, codons['GCC'])
         self.assertEqual(0, codons['TAA'])
+
+    def test_count_codons_ignore_invalid(self):
+        invalid = seqio.read(get_file_path('invalid_codons.gbk'))
+        codons = count_codons(invalid)
+        self.assertEqual(143, codons['GCC'])

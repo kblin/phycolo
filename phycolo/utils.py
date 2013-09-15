@@ -16,6 +16,8 @@ def count_codons(record):
         sequence = str(f.extract(record.seq))
         for i in range(0, len(sequence), 3):
             codon = sequence[i:i+3]
+            if codon not in all_codons:
+                continue
             codons[codon] += 1
 
     return codons
