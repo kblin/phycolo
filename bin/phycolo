@@ -1,7 +1,55 @@
 #!/usr/bin/env python
+# vim: set fileencoding=utf-8 et sts=4 sw=4 :
+# Part of phycolo, see LICENSE for details
+# Copyright (C) 2013  Kai Blin <kai.blin@biotech.uni-tuebingen.de>
+
+import sys
+import argparse
+import phycolo
+from os import path
+from sqlalchemy import create_engine
+from helperlibs.bio import seqio
+from phycolo import actions
+from phycolo.models import Session, Base
 
 def main():
-    pass
+    desc = 'Pyholgenetic Codon-based Localization of Gene Clusters'
+    default_db_path = path.expanduser("~/.phycolo.db")
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--uri', default="sqlite:///%s" % default_db_path,
+                        help="Set the configfile to use")
+    parser.add_argument('-m', '--mode',
+                        choices=['search', 'store', 'print'], default='search',
+                        help="Select which mode to use phycolo in")
+    parser.add_argument('--version', action='store_true', default=False,
+                        help='Print version information, then exit')
+    parser.add_argument('sequence',
+                        help='Sequence file to work on')
+    options = parser.parse_args()
+
+    if options.version:
+        print "phycolo %s" % phycolo.__version__
+        sys.exit(0)
+
+    if not path.exists(options.sequence):
+        print "Invalid sequence file %r" % options.sequence
+        sys.exit(2)
+
+    record = seqio.read(options.sequence)
+
+    if options.mode == 'print':
+        print actions.codon_table(record)
+        sys.exit(0)
+
+    engine = create_engine(options.uri)
+    Base.metadata.create_all(engine)
+    Session.configure(bind=engine)
+    session = Session()
+
+    if options.mode == 'store':
+        actions.store(session, record)
+    else:
+        actions.search(session, record)
 
 if __name__ == "__main__":
     main()
